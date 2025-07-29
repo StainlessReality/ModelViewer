@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PiggyGoUp</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+        #balance { font-size: 3em; }
+        #milestone { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>PiggyGoUp</h1>
+    <div id="balance">Loading...</div>
+    <div>
+        Annual Growth Rate: <input type="number" id="rate" value="0.02" step="0.01"> (e.g. 0.02 for 2%)
+    </div>
+    <div id="milestone"></div>
+    <script>
+        let P = 0;
+        let ts = Date.now();
+        let milestone = 0;
+
+        function fetchBalance() {
+            fetch('/api/balance').then(r => r.json()).then(data => {
+                if(data.P !== undefined){
+                    P = data.P;
+                    ts = new Date(data.ts).getTime();
+                }
+            });
+        }
+
+        function animate() {
+            const rate = parseFloat(document.getElementById('rate').value);
+            const now = Date.now();
+            const dt = (now - ts) / 1000; // seconds
+            const A = P * Math.exp(rate * dt / (365*24*3600));
+            document.getElementById('balance').textContent = '£' + A.toFixed(2);
+            if(A >= milestone + 100){
+                milestone = Math.floor(A / 100) * 100;
+                document.getElementById('milestone').textContent = `🎉 Reached £${milestone}!`;
+            }
+            requestAnimationFrame(animate);
+        }
+
+        fetchBalance();
+        setInterval(fetchBalance, 60000); // refresh every minute
+        requestAnimationFrame(animate);
+    </script>
+    <p><a href="/login">Connect Bank Account</a></p>
+</body>
+</html>
